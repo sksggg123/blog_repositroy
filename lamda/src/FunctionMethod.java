@@ -1,3 +1,5 @@
+import java.lang.FunctionalInterface;
+
 /**
  * author       : gwonbyeong-yun <sksggg123>
  * ------------------------------------------
