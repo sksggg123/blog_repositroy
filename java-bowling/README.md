@@ -1,71 +1,485 @@
-# 1단계 - 볼링 점수판(그리기)  나의미션
+package bowl;
 
-## 진행 방법
-- 볼링 게임 점수판에 대한 github 저장소를 기반으로 실습을 진행한다.
-- 요구사항에 대한 구현을 완료한 후 자신의 github 아이디에 해당하는 브랜치에 Pull Request(이하 PR)를 통해 코드 리뷰 요청을 한다.
-- 코드 리뷰 피드백에 대한 개선 작업을 하고 다시 PUSH한다.
-- 모든 피드백을 완료하면 다음 단계를 도전하고 앞의 과정을 반복한다.
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-## 요구사항
 
-기능 요구사항
-- 최종 목표는 볼링 점수를 계산하는 프로그램을 구현한다. 1단계 목표는 점수 계산을 제외한 볼링 게임 점수판을 구현하는 것이다.
-- 각 프레임이 스트라이크이면 "X", 스페어이면 "9 | /", 미스이면 "8 | 1", 과 같이 출력하도록 구현한다.
-    - 스트라이크(strike) : 프레임의 첫번째 투구에서 모든 핀(10개)을 쓰러트린 상태
-    - 스페어(spare) : 프레임의 두번재 투구에서 모든 핀(10개)을 쓰러트린 상태
-    - 미스(miss) : 프레임의 두번재 투구에서도 모든 핀이 쓰러지지 않은 상태
-    - 거터(gutter) : 핀을 하나도 쓰러트리지 못한 상태. 거터는 "-"로 표시
-- 10 프레임은 스트라이크이거나 스페어이면 한 번을 더 투구할 수 있다.
+public class BowlApplication
+{
 
-## 구현 시작 방법
-- 볼링 게임의 점수 계산 방식 아는 사람은 바로 구현을 시작한다.
-- 점수 계산 방식을 모르는 사람은 구글에서 "볼링 점수 계산법"과 같은 키워드로 검색해 볼링 게임의 점수 계산 방식을 학습한 후 구현을 시작한다.
+	public static void main(final String[] args)
+	{
+		final BowlApplication app = new BowlApplication();
+		app.run();
+	}
 
-프로그램 실행 결과
-```java
-플레이어 이름은(3 english letters)?: PJS
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |      |      |      |      |      |      |      |      |      |      |
+	public void run()
+	{
+		final List<Integer> inputList = new ArrayList<>(Arrays.asList(3, 5, 10, 0, 4, 7, 3, 5, 4, 0, 0, 10, 10, 3, 5, 3, 7, 10));
+		final Board board = new Board();
 
-1프레임 투구 : 10
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |  X   |      |      |      |      |      |      |      |      |      |
+		inputList.stream().map(score -> board.play(score)).forEach(System.out::println);
+		//		inputList.stream().map(score -> board.play(score)).collect(Collectors.toList());
+	}
+}
 
-2프레임 투구 : 8
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |  X   |  8   |      |      |      |      |      |      |      |      |
 
-2프레임 투구 : 2
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |  X   |  8|/ |      |      |      |      |      |      |      |      |
 
-3프레임 투구 :  7
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |  X   |  8|/ |  7   |      |      |      |      |      |      |      |
+========================================================================================================================================
 
-3프레임 투구 :  : 0
-| NAME |  01  |  02  |  03  |  04  |  05  |  06  |  07  |  08  |  09  |  10  |
-|  PJS |  X   |  8|/ |  7|- |      |      |      |      |      |      |      |
+package bowl;
 
-...
-```
+public class NormalFrame
+{
+	private final NormalFrameScore frame;
 
-## 프로그래밍 요구사항
+	NormalFrame()
+	{
+		this.frame = new NormalFrameScore();
+	}
 
-- 객체지향 생활 체조 원칙을 지키면서 프로그래밍한다.
+	NormalFrame(final NormalFrameScore frame)
+	{
+		this.frame = frame;
+	}
 
-객체지향 생활 체조 원칙
-- 규칙 1: 한 메서드에 오직 한 단계의 들여쓰기만 한다.
-- 규칙 2: else 예약어를 쓰지 않는다.
-- 규칙 3: 모든 원시값과 문자열을 포장한다.
-- 규칙 4: 한 줄에 점을 하나만 찍는다.
-- 규칙 5: 줄여쓰지 않는다(축약 금지).
-- 규칙 6: 모든 엔티티를 작게 유지한다.
-- 규칙 7: 3개 이상의 인스턴스 변수를 가진 클래스를 쓰지 않는다.
-- 규칙 8: 일급 콜렉션을 쓴다.
-- 규칙 9: 게터/세터/프로퍼티를 쓰지 않는다.
+	NormalFrame bowl(final int fallCount)
+	{
+		final boolean bowlable = frame.bowl(fallCount);
+		if (bowlable)
+		{
+			return this;
+		}
 
-## 힌트
-- 객체 단위를 가장 작은 단위까지 극단적으로 분리하는 시도를 해본다.
-- 1 ~ 9 프레임을 NormalFrame, 10 프레임을 FinalFrame과 같은 구조로 구현한 후 Frame을 추가해 중복을 제거해 본다.
-- 다음 Frame을 현재 Frame 외부에서 생성하기 보다 현재 Frame에서 다음 Frame을 생성하는 방식으로 구현해 보고, 어느 구현이 더 좋은지 검토해 본다.
+		return new NormalFrame(frame.nextFrame(fallCount));
+	}
+
+	boolean isFrameOver()
+	{
+		return frame.isOverTime();
+	}
+
+	int sum()
+	{
+		return frame.sum();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "NormalFrame [frame=" + frame + "]";
+	}
+}
+
+
+
+
+========================================================================================================================================
+
+package bowl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+
+public class NormalFrameScore
+{
+	private static final int MAX_FRAME_SCORE = 10;
+	private static final int MAX_BOWL_COUNT = 2;
+	private static final int STRIKE_BOWL_COUNT = 1;
+	private final List<Score> scores;
+
+	NormalFrameScore()
+	{
+		this.scores = new ArrayList<>();
+	}
+
+	NormalFrameScore(final int score)
+	{
+		this.scores = new ArrayList<>(Arrays.asList(Score.of(score)));
+	}
+
+	boolean bowl(final int fallCount)
+	{
+		// sum이 10 이하
+		// 2번 투구 X
+		if (isStrike() || !isBowl(fallCount))
+		{
+			System.out.println("create");
+			return false;
+		}
+		addScore(fallCount);
+		return true;
+	}
+
+	// stike 확인
+	boolean isStrike()
+	{
+		return sum() == MAX_FRAME_SCORE && bowlCountPerFrame() == STRIKE_BOWL_COUNT;
+	}
+
+	// 현재 Frame 두번째 투구 가능한지 (sum() + fallCount > 10)
+	boolean isBowl(final int fallCount)
+	{
+		if ((sum() + fallCount) > MAX_FRAME_SCORE)
+		{
+			throw new IllegalArgumentException("투구의 점수가 잘 못 되었습니다." + (sum() + fallCount));
+		}
+
+		if (isOverTime())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	// 현재 Frame 종료되었는지 (NormalFrame 기준 - 2회)
+	boolean isOverTime()
+	{
+		return bowlCountPerFrame() >= MAX_BOWL_COUNT || isStrike();
+	}
+
+	// 현재 Frame 몇번 투구한지
+	int bowlCountPerFrame()
+	{
+		return this.scores.size();
+	}
+
+	// 현재 Frame 종료 후 새로운 Frame 생성
+	NormalFrameScore nextFrame(final int fallCount)
+	{
+		return new NormalFrameScore(fallCount);
+	}
+
+	// 현재 Frame sum
+	int sum()
+	{
+		return scores.stream().mapToInt(Score::getScore).sum();
+	}
+
+	// 현재 Frame에 Score추가 private으로 내부에서만 사용하게 제한
+	private void addScore(final int fallCount)
+	{
+		scores.add(Score.of(fallCount));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "NormalFrameScore [scores=" + scores + "]";
+	}
+}
+
+
+
+========================================================================================================================================
+
+package bowl;
+
+public class Score
+{
+	private static final int MAX_SCORE = 10;
+	private static final int MIN_SCORE = 0;
+	private final int score;
+
+	Score(final int score)
+	{
+		this.score = score;
+	}
+
+	static Score of(final int fallCount)
+	{
+		if (fallCount < MIN_SCORE || fallCount > MAX_SCORE)
+		{
+			throw new IllegalArgumentException();
+		}
+		return new Score(fallCount);
+	}
+
+	int getScore()
+	{
+		return score;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "Score [score=" + score + "]";
+	}
+}
+
+
+
+========================================================================================================================================
+
+package bowl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+
+public class FinalFrameScore
+{
+	private static final int DEFUALT_FRAME_COUNT = 2;
+	private static final int MAX_FRAME_SCORE = 30;
+	private static final int MAX_BOWL_COUNT = 3;
+	private static final int SPARE_COUNT = 2;
+	private static final int SPARE_SCORE = 10;
+	private static final int EXCLUDE_STRIE_SUM = 0;
+	private final List<Score> scores;
+
+	FinalFrameScore()
+	{
+		this.scores = new ArrayList<>();
+	}
+
+	FinalFrameScore(final int score)
+	{
+		this.scores = new ArrayList<>(Arrays.asList(Score.of(score)));
+	}
+
+	boolean bowl(final int fallCount)
+	{
+		// sum이 30 이하
+		// 3번 투구 X
+		// spare or strike
+		if (!isBowl(fallCount))
+		{
+			return false;
+		}
+		addScore(fallCount);
+		return true;
+	}
+
+	// 현재 Frame 두번째 투구 가능한지 (sum() + fallCount > 10)
+	boolean isBowl(final int fallCount)
+	{
+		if ((sum() + fallCount) > MAX_FRAME_SCORE)
+		{
+			throw new IllegalArgumentException("투구의 점수가 잘 못 되었습니다.");
+		}
+
+		if (isOverTime())
+		{
+			throw new IllegalArgumentException("종료된 Frame입니다.");
+		}
+
+		return true;
+	}
+
+	// stike 확인
+	boolean isStrike()
+	{
+		return sum() / MAX_FRAME_SCORE == bowlCountPerFrame() && sum() != EXCLUDE_STRIE_SUM;
+	}
+
+	// 투구가 스페어 상태인지 체크
+	boolean isSpare()
+	{
+		return sum() == SPARE_SCORE && bowlCountPerFrame() == SPARE_COUNT;
+	}
+
+	// 현재 Frame 종료되었는지
+	boolean isOverTime()
+	{
+		if (isDefaultTime() && !isSpare() && !isStrike())
+		{
+			return true;
+		}
+
+		return bowlCountPerFrame() >= MAX_BOWL_COUNT;
+	}
+
+	private boolean isDefaultTime()
+	{
+		return bowlCountPerFrame() == DEFUALT_FRAME_COUNT;
+	}
+
+	// 현재 Frame 몇번 투구한지
+	int bowlCountPerFrame()
+	{
+		return this.scores.size();
+	}
+
+	// 현재 Frame sum
+	int sum()
+	{
+		return scores.stream().mapToInt(Score::getScore).sum();
+	}
+
+	// 현재 Frame에 Score추가 private으로 내부에서만 사용하게 제한
+	private void addScore(final int fallCount)
+	{
+		scores.add(Score.of(fallCount));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "FinalFrameScore [scores=" + scores + "]";
+	}
+
+
+}
+
+
+
+========================================================================================================================================
+
+package bowl;
+
+public class FinalFrame
+{
+	private final FinalFrameScore frame;
+
+	FinalFrame()
+	{
+		this.frame = new FinalFrameScore();
+	}
+
+	FinalFrame(final FinalFrameScore frame)
+	{
+		this.frame = frame;
+	}
+
+	FinalFrame bowl(final int fallCount)
+	{
+		final boolean bowlable = frame.bowl(fallCount);
+		if (!bowlable)
+		{
+			throw new IllegalArgumentException();
+		}
+		return this;
+	}
+
+	int frameSum()
+	{
+		return frame.sum();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "FinalFrame [frame=" + frame + "]";
+	}
+
+
+}
+
+
+========================================================================================================================================
+
+package bowl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class Board
+{
+	private static final int NORMAL_FRAME_COUNT = 9;
+	private static final int FINAL_FRAME_COUNT = 1;
+	private static final int TOTAL_FRAME_COUNT = NORMAL_FRAME_COUNT + FINAL_FRAME_COUNT;
+	private static final int NORMAL_FRAME_BOWL_COUNT = 2;
+	private static final int TOTAL_BOWL_MAX_COUNT = NORMAL_FRAME_BOWL_COUNT * NORMAL_FRAME_COUNT + FINAL_FRAME_COUNT;
+	private static final int ONE = 1;
+	private static final int ZERO = 0;
+
+	private final List<NormalFrame> normalFrame;
+	private final FinalFrame finalFrame;
+
+	public Board()
+	{
+		this.normalFrame = new ArrayList<>();
+		this.finalFrame = new FinalFrame();
+	}
+
+	public int play(final int fallCount)
+	{
+		if (isNormalFrameGameOver())
+		{
+			return finalFrame.bowl(fallCount).frameSum();
+		}
+		return normalPlay(fallCount);
+	}
+
+	public boolean isNormalFrameGameOver()
+	{
+		return normalFrame.size() >= NORMAL_FRAME_COUNT;
+	}
+
+	private int normalPlay(final int fallCount)
+	{
+		if (isEmpty())
+		{
+			final NormalFrame normal = new NormalFrame();
+			normalFrame.add(normal.bowl(fallCount));
+			return normalFrame.get(ZERO).sum();
+		}
+		if (isNormalFrameOver())
+		{
+			final NormalFrame normal = new NormalFrame();
+			normalFrame.add(normal.bowl(fallCount));
+			return normal.sum();
+		}
+		return normalFrame.get(normalFrameLastIndex()).bowl(fallCount).sum();
+	}
+
+	private boolean isNormalFrameOver()
+	{
+		return normalFrame.get(normalFrameLastIndex()).isFrameOver();
+	}
+
+	private int normalFrameLastIndex()
+	{
+		return normalFrame.size() - ONE;
+	}
+
+	private boolean isEmpty()
+	{
+		return normalFrame.isEmpty();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "Board [normalFrame=" + normalFrame + ", finalFrame=" + finalFrame + "]";
+	}
+
+
+}
+
